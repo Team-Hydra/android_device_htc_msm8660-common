@@ -44,7 +44,8 @@ PRODUCT_PACKAGES += \
     audio.primary.msm8660 \
     audio.usb.default \
     libaudio-resampler \
-    libaudioutils
+    libaudioutils \
+    audio_policy.conf
 
 # GPS
 PRODUCT_COPY_FILES += \
@@ -107,10 +108,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/htc/msm8660-common/configs/media_codecs.xml:system/etc/media_codecs.xml \
     device/htc/msm8660-common/configs/media_profiles.xml:system/etc/media_profiles.xml
-
-# audio policy
-PRODUCT_COPY_FILES += \
-    device/htc/msm8660-common/configs/audio_policy.conf:system/etc/audio_policy.conf
 
 # MSM8660 firmware
 PRODUCT_COPY_FILES += \
