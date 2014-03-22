@@ -96,8 +96,6 @@ const static char * previewSizesStr[] = {"1920x1088,1280x720,960x544,720x480,640
 
 static char *camera_fixup_getparams(int id, const char *settings)
 {
-    bool isVideo = false;
-    const char *sceneMode = "auto";
     android::CameraParameters params;
     params.unflatten(android::String8(settings));
 
@@ -107,21 +105,22 @@ static char *camera_fixup_getparams(int id, const char *settings)
 #endif
 
     /* Face detection */
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW, "0");
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW, "0");
+    if (id==0)
+    {
+        params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW, "0");
+        params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW, "0");
+    }
 
-    params.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES, previewSizesStr[id]);
-    params.set(android::CameraParameters::KEY_PREVIEW_FRAME_RATE, "30");
-    params.set(android::CameraParameters::KEY_ANTIBANDING, "auto");
-    params.set(android::CameraParameters::KEY_SKIN_TONE_ENHANCEMENT, "enable");
-    params.set(android::CameraParameters::KEY_FOCAL_LENGTH, "3.49");
-    params.set(android::CameraParameters::KEY_FOCUS_DISTANCES, "1.000000,32.000000,32.000000");
-    params.set(android::CameraParameters::KEY_SCENE_DETECT, "on");
-    params.set(android::CameraParameters::KEY_HORIZONTAL_VIEW_ANGLE, "54.4");
-    params.set(android::CameraParameters::KEY_VERTICAL_VIEW_ANGLE, "42.2");
-    params.set(android::CameraParameters::KEY_SUPPORTED_FOCUS_MODES, "auto,infinity,normal,macro");
-    params.set(android::CameraParameters::KEY_SUPPORTED_SELECTABLE_ZONE_AF, "auto,spot-metering,center-weighted,frame-average");
-    params.set(android::CameraParameters::KEY_SUPPORTED_TOUCH_AF_AEC, "touch-off");
+    if (id==0)
+    {
+        params.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES, previewSizesStr[id]);
+        params.set(android::CameraParameters::KEY_PREVIEW_FRAME_RATE, "30");
+	    params.set(android::CameraParameters::KEY_ANTIBANDING, "auto");
+	    params.set(android::CameraParameters::KEY_AUTO_EXPOSURE, "frame-average");
+	    params.set(android::CameraParameters::KEY_SCENE_DETECT, "on");
+	    params.set(android::CameraParameters::KEY_SKIN_TONE_ENHANCEMENT, "enable");
+	    params.set(android::CameraParameters::KEY_AUTO_EXPOSURE_LOCK, "false");
+    }
 
     // Some QCOM related framework changes expect max-saturation, max-contrast
     // and max-sharpness or the Camera app will crash.
@@ -135,16 +134,6 @@ static char *camera_fixup_getparams(int id, const char *settings)
     if((value = params.get("sharpness-max"))) {
         params.set("max-sharpness", value);
     }
-
-    if (params.get(android::CameraParameters::KEY_RECORDING_HINT)) {
-        isVideo = !strcmp(params.get(android::CameraParameters::KEY_RECORDING_HINT), "true");
-    }
-
-   if (params.get(android::CameraParameters::KEY_SCENE_MODE)) {
-        sceneMode = params.get(android::CameraParameters::KEY_SCENE_MODE);
-    }
-
-     params.set("cam-mode", isVideo ? "1" : "0");
 
 #if !LOG_NDEBUG
     ALOGV("%s: fixed parameters:", __FUNCTION__);
@@ -167,23 +156,6 @@ static char *camera_fixup_setparams(int id, const char *settings)
     ALOGV("%s: original parameters:", __FUNCTION__);
     params.dump();
 #endif
-
-    /* Face detection */
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW, "0");
-    params.set(android::CameraParameters::KEY_MAX_NUM_DETECTED_FACES_SW, "0");
-
-    params.set(android::CameraParameters::KEY_PREVIEW_FRAME_RATE, "30");
-    params.set(android::CameraParameters::KEY_AUTO_EXPOSURE_LOCK, "false");
-    params.set(android::CameraParameters::KEY_ANTIBANDING, "auto");
-    params.set(android::CameraParameters::KEY_AUTO_EXPOSURE, "frame-average");
-    params.set(android::CameraParameters::KEY_SCENE_DETECT, "on");
-    params.set(android::CameraParameters::KEY_SKIN_TONE_ENHANCEMENT, "enable");
-    params.set(android::CameraParameters::KEY_FOCAL_LENGTH, "3.49");
-    params.set(android::CameraParameters::KEY_FOCUS_DISTANCES, "1.000000,32.000000,32.000000");
-    params.set(android::CameraParameters::KEY_SCENE_DETECT, "on");
-    params.set(android::CameraParameters::KEY_TOUCH_AF_AEC, "touch-on");
-    params.set(android::CameraParameters::KEY_HORIZONTAL_VIEW_ANGLE, "54.4");
-    params.set(android::CameraParameters::KEY_VERTICAL_VIEW_ANGLE, "42.2");
 
     // Enable video mode for our HTC camera
     //   old overlay: needsHtcCamMode
@@ -295,6 +267,9 @@ static void camera_stop_preview(struct camera_device *device)
 
     if (!device)
         return;
+
+    // Workaround for camera freezes
+    VENDOR_CALL(device, send_command, 7, 0, 0);
 
     VENDOR_CALL(device, stop_preview);
 }
@@ -463,7 +438,17 @@ static int camera_send_command(struct camera_device *device,
     if (!device)
         return -EINVAL;
 
-    return VENDOR_CALL(device, send_command, cmd, arg1, arg2);
+    /* send_command may cause the camera hal do to unexpected things like lockups.
+     * we assume it wont. if it does so, prevent this by returning 0 */
+
+    if(cmd == 6) {
+        /* this command causes seg fault and camera crashes as this send_command calls
+         * for proprietary face detection models not supported in our framework */
+        ALOGV("send_command related to face detection suppressed");
+        return 0;
+    } else {
+        return VENDOR_CALL(device, send_command, cmd, arg1, arg2);
+    }
 }
 
 static void camera_release(struct camera_device *device)

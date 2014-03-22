@@ -133,8 +133,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.sf.hw=1 \
     dev.pm.dyn_samplingrate=1 \
     ro.opengles.version=131072 \
-    ro.zygote.disable_gl_preload=true \
-    debug.hwui.render_dirty_regions=false \
     debug.egl.recordable.rgba8888=1
 
 # call the proprietary setup
