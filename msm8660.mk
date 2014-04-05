@@ -120,6 +120,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/htc/msm8660-common/configs/98netflix:system/etc/init.d/98netflix
 
+# Thermal configuration
+PRODUCT_COPY_FILES += \
+    device/htc/msm8660-common/configs/thermald.conf:system/etc/thermald.conf
+
 # Device uses high-density artwork where available
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
