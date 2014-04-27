@@ -134,7 +134,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.hwc.mdcomp.enable=true \
     debug.mdpcomp.logs=0 \
     debug.sf.hw=1 \
-    lpa.decode=true \
     dev.pm.dyn_samplingrate=1 \
     ro.opengles.version=131072 \
     debug.egl.recordable.rgba8888=1
