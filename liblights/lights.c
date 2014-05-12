@@ -39,7 +39,9 @@ static int g_backlight = 255;
 
 char const*const AMBER_LED_FILE = "/sys/class/leds/amber/brightness";
 char const*const GREEN_LED_FILE = "/sys/class/leds/green/brightness";
+#ifdef HAS_BLUE_LED
 char const*const BLUE_LED_FILE = "/sys/class/leds/blue/brightness";
+#endif
 
 char const*const BUTTON_FILE = "/sys/class/leds/button-backlight/brightness";
 
@@ -110,22 +112,30 @@ static void set_speaker_light_locked (struct light_device_t *dev, struct light_s
 				case LED_AMBER:
 					write_int (AMBER_BLINK_FILE, 4);
 					write_int (GREEN_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 				case LED_GREEN:
 					write_int (GREEN_BLINK_FILE, 1);
 					write_int (AMBER_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 				case LED_BLUE:
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 1);
+#endif
 					write_int (AMBER_LED_FILE, 0);
 					write_int (GREEN_LED_FILE, 0);
 					break;
 				case LED_BLANK:
 					write_int (AMBER_BLINK_FILE, 0);
 					write_int (GREEN_BLINK_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 				default:
 					ALOGE("set_led_state colorRGB=%08X, unknown color\n",
@@ -138,22 +148,30 @@ static void set_speaker_light_locked (struct light_device_t *dev, struct light_s
 				case LED_AMBER:
 					write_int (AMBER_LED_FILE, 1);
 					write_int (GREEN_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 				case LED_GREEN:
 					write_int (AMBER_LED_FILE, 0);
 					write_int (GREEN_LED_FILE, 1);
-					write_int (BLUE_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
+			                write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 				case LED_BLUE:
 					write_int (AMBER_LED_FILE, 0);
 					write_int (GREEN_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 1);
+#endif
 					break;
 				case LED_BLANK:
 					write_int (AMBER_LED_FILE, 0);
 					write_int (GREEN_LED_FILE, 0);
+#ifdef HAS_BLUE_LED
 					write_int (BLUE_LED_FILE, 0);
+#endif
 					break;
 
 			}
@@ -176,11 +194,15 @@ static void set_speaker_light_locked_dual (struct light_device_t *dev, struct li
 	if (bcolor == LED_AMBER) {
 		write_int (GREEN_LED_FILE, 1);
 		write_int (AMBER_BLINK_FILE, 4);
+#ifdef HAS_BLUE_LED
 		write_int (BLUE_LED_FILE, 0);
+#endif
 	} else if (bcolor == LED_GREEN) {
 		write_int (GREEN_LED_FILE, 1);
 		write_int (AMBER_BLINK_FILE, 1);
+#ifdef HAS_BLUE_LED
 		write_int (BLUE_LED_FILE, 0);
+#endif
 	} else {
 		ALOGE("set_led_state (dual) unexpected color: bcolorRGB=%08x\n", bcolorRGB);
 	}
@@ -316,3 +338,4 @@ struct hw_module_t HAL_MODULE_INFO_SYM = {
 	.author = "Diogo Ferreira <diogo@underdev.org>",
 	.methods = &lights_module_methods,
 };
+
